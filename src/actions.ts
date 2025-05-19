@@ -5,6 +5,7 @@ import { defaultSession, sessionOptions } from "@/lib/session";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import prisma from "./lib/prisma";
 
 export async function getSession() {
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
@@ -17,23 +18,28 @@ export async function getSession() {
 }
 
 export async function login(
-  formData: FormData
+    prevState: any,
+    formData: FormData
 ) {
   const session = await getSession();
 
-  const formUsername = formData.get("username") as string;
+  const formIdentify = formData.get("identify") as string;
   const formPassword = formData.get("password") as string;
 
-  const user = {
-    id:"dasfsdgds",
-    username:formUsername,
-    img:"avatar.png"
+  const user = await prisma.user.findFirst({
+    where: {
+        OR: [
+            { username: formIdentify },
+            { email: formIdentify }
+        ]
+    }
+  })
+
+  if(!user){
+    return { error: "Kullanıcı bulunamadı!" }
   }
 
-  // IF CREDENTIALS ARE WRONG RETURN AN ERROR
-  if(!user){
-    return { error: "Wrong Credentials!" }
-  }
+
 
   // You can pass any information you want
   session.isLoggedIn = true;

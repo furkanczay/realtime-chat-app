@@ -1,13 +1,12 @@
+import { getSession } from "@/actions";
 import ChatRoom from "@/components/chat-room";
 
-export default function Home() {
+export default async function Home() {
+  const session = await getSession();
+  
   return (
     <div>
-      <h1>Hello World</h1>
-      <ChatRoom roomName="Genel" messages={[{
-        text: "Hello World",
-        senderId: 1
-      }]} />
+      <ChatRoom username={session.username!} />
     </div>
   );
 }
