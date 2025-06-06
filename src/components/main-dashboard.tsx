@@ -6,15 +6,7 @@ import AllFriendsList from "./all-friends-list";
 import UserSearch from "./user-search";
 import PrivateChat from "./private-chat";
 import NotificationToast from "./notification-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import {
-  MessageCircle,
-  Users,
-  UserPlus,
-  Bell,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { MessageCircle, Users, Bell, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Session } from "@/lib/auth";
@@ -57,11 +49,18 @@ export default function MainDashboard({ user }: MainDashboardProps) {
 
   useEffect(() => {
     // Bildirim izni iste
-    requestPermission();
+    requestPermission(); // Kullanıcı odasına katıl
+    socket.emit("join_user", { userId: user.user.id });
 
-    // Kullanıcı odasına katıl
-    socket.emit("join_user", { userId: user.user.id }); // Socket event listener'ları
-    const handleMessageNotification = (data: any) => {
+    // Socket event listener'ları
+    const handleMessageNotification = (data: {
+      type: "friend_request" | "friend_accepted" | "message" | "info";
+      title: string;
+      message: string;
+      username?: string;
+      avatar?: string;
+      data: { senderId: string; [key: string]: unknown };
+    }) => {
       // Aktif sohbet edilen kullanıcıdan gelen mesaj değilse bildirim göster
       if (!selectedUser || selectedUser.id !== data.data.senderId) {
         addNotification(data);
@@ -69,12 +68,24 @@ export default function MainDashboard({ user }: MainDashboardProps) {
         handleRefreshFriends();
       }
     };
-
-    const handleFriendRequestNotification = (data: any) => {
+    const handleFriendRequestNotification = (data: {
+      type: "friend_request" | "friend_accepted" | "message" | "info";
+      title: string;
+      message: string;
+      username?: string;
+      avatar?: string;
+      data?: Record<string, unknown>;
+    }) => {
       addNotification(data);
     };
-
-    const handleFriendAcceptedNotification = (data: any) => {
+    const handleFriendAcceptedNotification = (data: {
+      type: "friend_request" | "friend_accepted" | "message" | "info";
+      title: string;
+      message: string;
+      username?: string;
+      avatar?: string;
+      data?: Record<string, unknown>;
+    }) => {
       addNotification(data);
     };
 

@@ -4,8 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getSession();
 
   if (!session) {
@@ -18,7 +19,7 @@ export async function PATCH(
     );
   }
   try {
-    const requestId = parseInt(params.id);
+    const requestId = parseInt(id);
     const { action } = await request.json();
 
     if (!["accept", "reject"].includes(action)) {

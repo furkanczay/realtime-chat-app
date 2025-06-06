@@ -46,17 +46,40 @@ export async function GET() {
         },
       },
     }); // Arkadaş listesini düzenle (kendisi hariç) - tüm arkadaşları döndür
-    const friends = friendships.map((friendship: any) => {
-      const friend =
-        friendship.user1Id === session.user.id
-          ? friendship.user2
-          : friendship.user1;
+    const friends = friendships.map(
+      (friendship: {
+        user1Id: string;
+        user2Id: string;
+        user1: {
+          id: string;
+          username: string;
+          name: string;
+          email: string;
+          avatar: string | null;
+          isOnline: boolean;
+          lastSeen: Date | null;
+        };
+        user2: {
+          id: string;
+          username: string;
+          name: string;
+          email: string;
+          avatar: string | null;
+          isOnline: boolean;
+          lastSeen: Date | null;
+        };
+      }) => {
+        const friend =
+          friendship.user1Id === session.user.id
+            ? friendship.user2
+            : friendship.user1;
 
-      return {
-        ...friend,
-        // Gerçek online durumu ve son görülme zamanı
-      };
-    });
+        return {
+          ...friend,
+          // Gerçek online durumu ve son görülme zamanı
+        };
+      }
+    );
 
     return NextResponse.json({
       success: true,

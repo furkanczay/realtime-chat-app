@@ -33,7 +33,7 @@ export function useNotifications() {
         audio.play().catch(() => {
           // Ses çalma başarısız olursa sessizce devam et
         });
-      } catch (error) {
+      } catch {
         // Ses dosyası yoksa sessizce devam et
       }
 

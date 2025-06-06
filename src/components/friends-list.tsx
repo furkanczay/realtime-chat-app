@@ -1,9 +1,7 @@
 "use client";
 
-import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Avatar, AvatarFallback } from "./ui/avatar";
-import { MessageCircle, Plus, User, Search } from "lucide-react";
+import { User, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { socket } from "@/lib/socket-client";
 

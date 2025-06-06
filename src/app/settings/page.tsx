@@ -6,13 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, User, Mail, Camera, Save, LogOut } from "lucide-react";
+import { ArrowLeft, User, Mail, Save, LogOut } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{
+    id: string;
+    name: string;
+    email: string;
+    emailVerified: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    image?: string | null;
+    lastSeen?: Date;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -139,33 +147,6 @@ export default function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Avatar Section */}
-            <div className="flex items-center space-x-4">
-              <Avatar className="w-20 h-20">
-                <AvatarImage
-                  src={formData.avatar || user?.image}
-                  alt={user?.name || "Kullanıcı"}
-                />
-                <AvatarFallback className="text-lg">
-                  {(user?.name || user?.email)?.charAt(0)?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <Label htmlFor="avatar">Profil Fotoğrafı URL</Label>
-                <div className="flex items-center space-x-2 mt-1">
-                  <Camera className="w-4 h-4 text-gray-400" />
-                  <Input
-                    id="avatar"
-                    name="avatar"
-                    value={formData.avatar}
-                    onChange={handleInputChange}
-                    placeholder="https://example.com/avatar.jpg"
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-            </div>
-
             {/* Name Field */}
             <div className="space-y-2">
               <Label htmlFor="name">İsim</Label>

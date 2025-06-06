@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { X, Check, UserPlus, MessageCircle, Bell } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
@@ -13,7 +12,7 @@ export interface Notification {
   message: string;
   timestamp: Date;
   read: boolean;
-  data?: any;
+  data?: Record<string, unknown>;
   username?: string;
   avatar?: string;
 }
@@ -29,8 +28,6 @@ export default function NotificationToast({
   onRemove,
   onMarkAsRead,
 }: NotificationToastProps) {
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
   const getIcon = (type: Notification["type"]) => {
     switch (type) {
       case "friend_request":

@@ -4,7 +4,10 @@ import prisma from "./lib/prisma";
 import { auth } from "./lib/auth";
 import { APIError } from "better-auth";
 
-export async function login(prevState: any, formData: FormData) {
+export async function login(
+  prevState: { error?: string } | undefined | null,
+  formData: FormData
+) {
   const formEmail = formData.get("email") as string;
   const formPassword = formData.get("password") as string;
 
@@ -25,7 +28,10 @@ export async function login(prevState: any, formData: FormData) {
   redirect("/");
 }
 
-export async function register(prevState: any, formData: FormData) {
+export async function register(
+  prevState: { error?: string } | undefined | null,
+  formData: FormData
+) {
   const formUsername = formData.get("username") as string;
   const formEmail = formData.get("email") as string;
   const formPassword = formData.get("password") as string;

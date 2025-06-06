@@ -176,7 +176,7 @@ const socketHandler = (socket: Socket, io: Server): void => {
   });
 
   // Eski genel chat için (geriye uyumluluk)
-  socket.on("sendMessage", async (data) => {
+  socket.on("sendMessage", async () => {
     console.log("Genel mesaj (deprecated)");
     // Bu artık kullanılmıyor ama mevcut kod için bırakıldı
   });

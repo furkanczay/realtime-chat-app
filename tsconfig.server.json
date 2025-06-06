@@ -1,12 +1,20 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-      "module": "CommonJS",
-      "outDir": "dist",
-      "lib": ["ES2019"],
-      "target": "ES2019",
-      "isolatedModules": false,
-      "noEmit": false
-    },
-    "include": ["server.ts"]
-  }
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2022",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "resolveJsonModule": true,
+    "noEmit": false,
+    "isolatedModules": false
+  },
+  "include": ["src/server.ts", "src/server/**/*", "src/lib/**/*"],
+  "exclude": ["node_modules", ".next", "dist"]
+}

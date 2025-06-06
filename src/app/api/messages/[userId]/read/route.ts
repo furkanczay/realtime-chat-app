@@ -1,7 +1,6 @@
 // Mesajları okundu olarak işaretle
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getIronSession } from "iron-session";
 import { getSession } from "@/lib/session";
 
 export async function POST(

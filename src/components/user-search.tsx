@@ -70,7 +70,6 @@ export default function UserSearch() {
 
         // Socket event emit et - arkadaş isteği gönderildi bildirimi
         if (data.success && data.data) {
-          const targetUser = searchResults.find((user) => user.id === userId);
           socket.emit("friendRequestSent", {
             requestId: data.data.id,
             senderId: data.data.senderId,
