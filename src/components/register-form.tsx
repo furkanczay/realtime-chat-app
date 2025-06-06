@@ -1,11 +1,11 @@
 "use client";
 
-import { login } from "@/actions";
+import { register } from "@/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useActionState } from "react";
-export default function LoginForm() {
-  const [state, action, isPending] = useActionState(login, undefined);
+export default function RegisterForm() {
+  const [state, action, isPending] = useActionState(register, undefined);
   return (
     <div className="max-w-xl mx-auto">
       {state?.error && (
@@ -17,8 +17,15 @@ export default function LoginForm() {
         <Input
           disabled={isPending}
           type="text"
-          name="identify"
-          placeholder="Kullanıcı adı veya e-posta adresi"
+          name="username"
+          placeholder="kullanıcı adı"
+        />{" "}
+        <br />
+        <Input
+          disabled={isPending}
+          type="email"
+          name="email"
+          placeholder="e-posta adresi"
         />{" "}
         <br />
         <Input
@@ -28,7 +35,7 @@ export default function LoginForm() {
           placeholder="Şifre"
         />{" "}
         <br />
-        <Button disabled={isPending}>Giriş Yap</Button>
+        <Button disabled={isPending}>Kayıt Ol</Button>
       </form>
     </div>
   );

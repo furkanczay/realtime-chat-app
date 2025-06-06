@@ -1,12 +1,12 @@
 import { getSession } from "@/actions";
-import ChatRoom from "@/components/chat-room";
+import MainDashboard from "@/components/main-dashboard";
 
 export default async function Home() {
   const session = await getSession();
-  
+
   return (
     <div>
-      <ChatRoom username={session.username!} />
+      <MainDashboard user={session} />
     </div>
   );
 }

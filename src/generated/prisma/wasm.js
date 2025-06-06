@@ -119,21 +119,38 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
-  email: 'email',
   username: 'username',
+  email: 'email',
   password: 'password',
-  image: 'image',
+  avatar: 'avatar',
+  isOnline: 'isOnline',
+  lastSeen: 'lastSeen',
   createdAt: 'createdAt',
-  udatedAt: 'udatedAt'
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.MessageScalarFieldEnum = {
   id: 'id',
   text: 'text',
-  senderId: 'senderId',
-  isSystemMessage: 'isSystemMessage',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  isRead: 'isRead',
+  senderId: 'senderId',
+  receiverId: 'receiverId'
+};
+
+exports.Prisma.FriendRequestScalarFieldEnum = {
+  id: 'id',
+  status: 'status',
+  createdAt: 'createdAt',
+  senderId: 'senderId',
+  receiverId: 'receiverId'
+};
+
+exports.Prisma.FriendshipScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  user1Id: 'user1Id',
+  user2Id: 'user2Id'
 };
 
 exports.Prisma.SortOrder = {
@@ -145,11 +162,17 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
-
+exports.FriendRequestStatus = exports.$Enums.FriendRequestStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED'
+};
 
 exports.Prisma.ModelName = {
   User: 'User',
-  Message: 'Message'
+  Message: 'Message',
+  FriendRequest: 'FriendRequest',
+  Friendship: 'Friendship'
 };
 
 /**

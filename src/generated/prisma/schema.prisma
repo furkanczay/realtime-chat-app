@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -15,22 +9,86 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  username  String    @unique
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
   password  String
-  image     String?
-  messages  Message[]
-  createdAt DateTime  @default(now())
-  udatedAt  DateTime  @updatedAt
+  avatar    String?
+  isOnline  Boolean  @default(false)
+  lastSeen  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Gönderilen mesajlar
+  sentMessages     Message[] @relation("SentMessages")
+  // Alınan mesajlar
+  receivedMessages Message[] @relation("ReceivedMessages")
+
+  // Gönderilen arkadaşlık istekleri
+  sentFriendRequests     FriendRequest[] @relation("SentFriendRequests")
+  // Alınan arkadaşlık istekleri
+  receivedFriendRequests FriendRequest[] @relation("ReceivedFriendRequests")
+
+  // Arkadaşlık ilişkileri (gönderilen)
+  friendships1 Friendship[] @relation("User1Friendships")
+  // Arkadaşlık ilişkileri (alınan)
+  friendships2 Friendship[] @relation("User2Friendships")
+
+  @@map("users")
 }
 
 model Message {
-  id              String   @id @default(cuid())
-  text            String
-  senderId        String?
-  sender          User?    @relation(fields: [senderId], references: [id])
-  isSystemMessage Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now())
+  isRead    Boolean  @default(false)
+
+  // Mesajı gönderen
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  senderId Int
+
+  // Mesajı alan
+  receiver   User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiverId Int
+
+  @@map("messages")
+}
+
+model FriendRequest {
+  id        Int                 @id @default(autoincrement())
+  status    FriendRequestStatus @default(PENDING)
+  createdAt DateTime            @default(now())
+
+  // İsteği gönderen
+  sender   User @relation("SentFriendRequests", fields: [senderId], references: [id])
+  senderId Int
+
+  // İsteği alan
+  receiver   User @relation("ReceivedFriendRequests", fields: [receiverId], references: [id])
+  receiverId Int
+
+  @@unique([senderId, receiverId])
+  @@map("friend_requests")
+}
+
+model Friendship {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  // İlk kullanıcı
+  user1   User @relation("User1Friendships", fields: [user1Id], references: [id])
+  user1Id Int
+
+  // İkinci kullanıcı
+  user2   User @relation("User2Friendships", fields: [user2Id], references: [id])
+  user2Id Int
+
+  @@unique([user1Id, user2Id])
+  @@map("friendships")
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
