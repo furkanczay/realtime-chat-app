@@ -355,7 +355,6 @@ export default function PrivateChat({
             <div className="flex items-center gap-2 text-sm text-gray-500">
               {selectedUser.isOnline ? (
                 <>
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                   <span>Çevrimiçi</span>
                 </>
               ) : (
@@ -595,8 +594,6 @@ export default function PrivateChat({
         <div className="flex items-center justify-center gap-2 mt-3 text-xs text-gray-400">
           <Shield className="h-3 w-3" />
           <span>Uçtan uca şifrelenmiş mesajlar</span>
-          <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-          <span>WhatsApp benzeri güvenlik</span>
         </div>
       </div>
     </div>

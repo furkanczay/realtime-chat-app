@@ -184,16 +184,20 @@ export default function FriendsList({
                       {friend.name}
                     </h3>
                     <div className="flex items-center gap-2">
+                      {" "}
                       {friend.lastMessageTime && (
                         <span className="text-xs text-gray-500">
                           {formatTime(friend.lastMessageTime)}
                         </span>
                       )}
-                      {friend.unreadCount && friend.unreadCount > 0 && (
-                        <div className="bg-green-500 text-white text-xs rounded-full h-5 min-w-[20px] flex items-center justify-center px-1.5 font-medium">
-                          {friend.unreadCount > 99 ? "99+" : friend.unreadCount}
-                        </div>
-                      )}
+                      {friend.unreadCount !== undefined &&
+                        friend.unreadCount > 0 && (
+                          <div className="bg-green-500 text-white text-xs rounded-full h-5 min-w-[20px] flex items-center justify-center px-1.5 font-medium">
+                            {friend.unreadCount > 99
+                              ? "99+"
+                              : friend.unreadCount}
+                          </div>
+                        )}
                     </div>
                   </div>
                   <p className="text-sm text-gray-500 truncate">

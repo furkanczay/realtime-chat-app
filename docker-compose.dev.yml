@@ -1,0 +1,35 @@
+version: "3.8"
+
+services: # PostgreSQL Database for Development
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: realtime_chat_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: devpassword
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - dev-network
+  # Redis for Development
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    networks:
+      - dev-network
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+
+networks:
+  dev-network:
+    driver: bridge

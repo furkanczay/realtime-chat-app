@@ -1,0 +1,67 @@
+version: "3.8"
+
+services: # PostgreSQL Database
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: realtime_chat
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_password_here
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # Redis for session storage (optional)
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:your_password_here@db:5432/realtime_chat?schema=public
+      - NEXTAUTH_SECRET=your_nextauth_secret_here
+      - NEXTAUTH_URL=http://localhost:3000
+      # Add other environment variables as needed
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - app-network
+    volumes:
+      # Optional: Mount uploads directory if you have file uploads
+      - ./uploads:/app/uploads
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  app-network:
+    driver: bridge
