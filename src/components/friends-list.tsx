@@ -8,8 +8,8 @@ import { useEffect, useState } from "react";
 import { socket } from "@/lib/socket-client";
 
 interface Friend {
-  id: number;
-  username: string;
+  id: string;
+  name: string;
   email: string;
   avatar?: string;
   isOnline?: boolean;
@@ -21,7 +21,7 @@ interface Friend {
 
 interface FriendsListProps {
   onSelectUser: (user: Friend) => void;
-  selectedUserId?: number;
+  selectedUserId?: string;
   onRefresh?: () => void;
 }
 
@@ -38,7 +38,7 @@ export default function FriendsList({
 
     // Socket event listener'ları ekle
     const handleUserStatusChange = (data: {
-      userId: number;
+      userId: string;
       isOnline: boolean;
       lastSeen: Date;
     }) => {
@@ -77,7 +77,7 @@ export default function FriendsList({
   };
 
   const filteredFriends = friends.filter((friend) =>
-    friend.username.toLowerCase().includes(searchTerm.toLowerCase())
+    friend.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const formatTime = (timestamp?: string) => {
@@ -172,7 +172,7 @@ export default function FriendsList({
                 <div className="relative">
                   <Avatar className="h-12 w-12">
                     <AvatarFallback className="bg-gradient-to-br from-green-400 to-blue-500 text-white font-semibold">
-                      {friend.username.charAt(0).toUpperCase()}
+                      {friend.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   {friend.isOnline && (
@@ -183,7 +183,7 @@ export default function FriendsList({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-semibold text-gray-900 truncate">
-                      {friend.username}
+                      {friend.name}
                     </h3>
                     <div className="flex items-center gap-2">
                       {friend.lastMessageTime && (

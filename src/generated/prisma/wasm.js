@@ -114,19 +114,25 @@ Prisma.NullTypes = {
  */
 
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
+  ReadUncommitted: 'ReadUncommitted',
+  ReadCommitted: 'ReadCommitted',
+  RepeatableRead: 'RepeatableRead',
   Serializable: 'Serializable'
 });
 
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   username: 'username',
+  displayUsername: 'displayUsername',
   email: 'email',
-  password: 'password',
   avatar: 'avatar',
   isOnline: 'isOnline',
   lastSeen: 'lastSeen',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  name: 'name',
+  emailVerified: 'emailVerified',
+  image: 'image'
 };
 
 exports.Prisma.MessageScalarFieldEnum = {
@@ -153,9 +159,50 @@ exports.Prisma.FriendshipScalarFieldEnum = {
   user2Id: 'user2Id'
 };
 
+exports.Prisma.SessionScalarFieldEnum = {
+  id: 'id',
+  expiresAt: 'expiresAt',
+  token: 'token',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  userId: 'userId'
+};
+
+exports.Prisma.AccountScalarFieldEnum = {
+  id: 'id',
+  accountId: 'accountId',
+  providerId: 'providerId',
+  userId: 'userId',
+  accessToken: 'accessToken',
+  refreshToken: 'refreshToken',
+  idToken: 'idToken',
+  accessTokenExpiresAt: 'accessTokenExpiresAt',
+  refreshTokenExpiresAt: 'refreshTokenExpiresAt',
+  scope: 'scope',
+  password: 'password',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.VerificationScalarFieldEnum = {
+  id: 'id',
+  identifier: 'identifier',
+  value: 'value',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
 };
 
 exports.Prisma.NullsOrder = {
@@ -172,7 +219,10 @@ exports.Prisma.ModelName = {
   User: 'User',
   Message: 'Message',
   FriendRequest: 'FriendRequest',
-  Friendship: 'Friendship'
+  Friendship: 'Friendship',
+  Session: 'Session',
+  Account: 'Account',
+  Verification: 'Verification'
 };
 
 /**

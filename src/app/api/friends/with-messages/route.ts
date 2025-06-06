@@ -1,4 +1,4 @@
-import { getSession } from "@/actions";
+import { getSession } from "@/lib/session";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { decryptMessage, generateRoomKey } from "@/lib/encryption";
@@ -20,13 +20,14 @@ export async function GET() {
     // Kullanıcının arkadaşlarını getir
     const friendships = await prisma.friendship.findMany({
       where: {
-        OR: [{ user1Id: session.userId }, { user2Id: session.userId }],
+        OR: [{ user1Id: session.user.id }, { user2Id: session.user.id }],
       },
       include: {
         user1: {
           select: {
             id: true,
             username: true,
+            name: true,
             email: true,
             avatar: true,
             isOnline: true,
@@ -37,6 +38,7 @@ export async function GET() {
           select: {
             id: true,
             username: true,
+            name: true,
             email: true,
             avatar: true,
             isOnline: true,
@@ -50,7 +52,7 @@ export async function GET() {
     const friendsWithMessages = await Promise.all(
       friendships.map(async (friendship: any) => {
         const friend =
-          friendship.user1Id === session.userId
+          friendship.user1Id === session.user.id
             ? friendship.user2
             : friendship.user1;
 
@@ -58,14 +60,14 @@ export async function GET() {
         const lastMessage = await prisma.message.findFirst({
           where: {
             OR: [
-              { senderId: session.userId, receiverId: friend.id },
-              { senderId: friend.id, receiverId: session.userId },
+              { senderId: session.user.id, receiverId: friend.id },
+              { senderId: friend.id, receiverId: session.user.id },
             ],
           },
           orderBy: { createdAt: "desc" },
           include: {
             sender: {
-              select: { username: true },
+              select: { username: true, name: true },
             },
           },
         });
@@ -79,7 +81,7 @@ export async function GET() {
         const unreadCount = await prisma.message.count({
           where: {
             senderId: friend.id,
-            receiverId: session.userId,
+            receiverId: session.user.id,
             isRead: false,
           },
         });
@@ -89,7 +91,7 @@ export async function GET() {
 
         try {
           // Mesajı şifresini çöz
-          const roomKey = generateRoomKey(session.userId, friend.id);
+          const roomKey = generateRoomKey(session.user.id, friend.id);
           lastMessageText = decryptMessage(lastMessage.text, roomKey);
           lastMessageTime = lastMessage.createdAt.toISOString();
 

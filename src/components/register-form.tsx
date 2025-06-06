@@ -17,6 +17,13 @@ export default function RegisterForm() {
         <Input
           disabled={isPending}
           type="text"
+          name="name"
+          placeholder="isim soyisim"
+        />{" "}
+        <br />
+        <Input
+          disabled={isPending}
+          type="text"
           name="username"
           placeholder="kullanıcı adı"
         />{" "}

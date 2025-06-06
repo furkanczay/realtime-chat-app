@@ -1,5 +1,5 @@
-import { getSession } from "@/actions";
 import prisma from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -19,13 +19,14 @@ export async function GET() {
     // Kullanıcının arkadaşlarını getir
     const friendships = await prisma.friendship.findMany({
       where: {
-        OR: [{ user1Id: session.userId }, { user2Id: session.userId }],
+        OR: [{ user1Id: session.user.id }, { user2Id: session.user.id }],
       },
       include: {
         user1: {
           select: {
             id: true,
             username: true,
+            name: true,
             email: true,
             avatar: true,
             isOnline: true,
@@ -36,6 +37,7 @@ export async function GET() {
           select: {
             id: true,
             username: true,
+            name: true,
             email: true,
             avatar: true,
             isOnline: true,
@@ -46,7 +48,7 @@ export async function GET() {
     }); // Arkadaş listesini düzenle (kendisi hariç) - tüm arkadaşları döndür
     const friends = friendships.map((friendship: any) => {
       const friend =
-        friendship.user1Id === session.userId
+        friendship.user1Id === session.user.id
           ? friendship.user2
           : friendship.user1;
 

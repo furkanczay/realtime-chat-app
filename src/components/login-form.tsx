@@ -17,7 +17,7 @@ export default function LoginForm() {
         <Input
           disabled={isPending}
           type="text"
-          name="identify"
+          name="email"
           placeholder="Kullanıcı adı veya e-posta adresi"
         />{" "}
         <br />

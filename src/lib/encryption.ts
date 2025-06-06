@@ -1,7 +1,7 @@
 import CryptoJS from "crypto-js";
 
 // Anahtar türetme fonksiyonu (iki kullanıcının ID'lerinden ortak anahtar üret)
-export function generateRoomKey(userId1: number, userId2: number): string {
+export function generateRoomKey(userId1: string, userId2: string): string {
   // İki kullanıcının ID'sini sıralayıp birleştir (tutarlı anahtar için)
   const sortedIds = [userId1, userId2].sort().join("-");
   // SHA256 ile hash'le ve ilk 32 karakteri al
@@ -54,7 +54,7 @@ export function isValidEncryption(encryptedText: string): boolean {
 // Test fonksiyonu (geliştirme amaçlı)
 export function testEncryption() {
   const testMessage = "Bu bir test mesajıdır!";
-  const testKey = generateRoomKey(1, 2);
+  const testKey = generateRoomKey("test1", "test2");
 
   console.log("Test Mesajı:", testMessage);
   console.log("Anahtar:", testKey);

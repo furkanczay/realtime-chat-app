@@ -1,4 +1,4 @@
-import { getSession } from "@/actions";
+import { getSession } from "@/lib/session";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -18,7 +18,7 @@ export async function GET() {
   // Kullanıcının tüm mesajlarını çek (gönderdiği ve aldığı)
   const messages = await prisma.message.findMany({
     where: {
-      OR: [{ senderId: session.userId }, { receiverId: session.userId }],
+      OR: [{ senderId: session.user.id }, { receiverId: session.user.id }],
     },
     orderBy: { createdAt: "asc" },
     include: {
@@ -26,6 +26,7 @@ export async function GET() {
         select: {
           id: true,
           username: true,
+          name: true,
           email: true,
           avatar: true,
         },
@@ -34,6 +35,7 @@ export async function GET() {
         select: {
           id: true,
           username: true,
+          name: true,
           email: true,
           avatar: true,
         },

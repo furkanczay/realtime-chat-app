@@ -16,14 +16,14 @@ import { useState, useEffect } from "react";
 import { socket } from "@/lib/socket-client";
 
 interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
   avatar?: string;
 }
 
 interface FriendRequest {
-  id: number;
+  id: string;
   sender: User;
   receiver: User;
   status: "PENDING" | "ACCEPTED" | "REJECTED";
@@ -55,7 +55,7 @@ export default function UserSearch() {
       setLoading(false);
     }
   };
-  const sendFriendRequest = async (userId: number) => {
+  const sendFriendRequest = async (userId: string) => {
     try {
       const response = await fetch("/api/friend-requests", {
         method: "POST",
@@ -88,7 +88,7 @@ export default function UserSearch() {
     }
   };
   const handleFriendRequest = async (
-    requestId: number,
+    requestId: string,
     action: "accept" | "reject"
   ) => {
     try {

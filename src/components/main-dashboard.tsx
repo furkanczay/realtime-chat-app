@@ -17,23 +17,22 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
+import { Session } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
 interface User {
-  id: number;
-  username: string;
+  id: string;
+  name: string;
   email: string;
   avatar?: string;
 }
 
 interface MainDashboardProps {
-  user: {
-    userId: number;
-    username: string;
-    email?: string;
-  };
+  user: Session;
 }
 
 export default function MainDashboard({ user }: MainDashboardProps) {
+  const router = useRouter();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<"messages" | "contacts">(
     "messages"
@@ -46,11 +45,10 @@ export default function MainDashboard({ user }: MainDashboardProps) {
     markAsRead,
     requestPermission,
   } = useNotifications();
-
   const currentUser: User = {
-    id: user.userId,
-    username: user.username,
-    email: user.email || "",
+    id: user.user.id,
+    name: user.user.name || "",
+    email: user.user.email || "",
   };
 
   const handleRefreshFriends = () => {
@@ -62,7 +60,7 @@ export default function MainDashboard({ user }: MainDashboardProps) {
     requestPermission();
 
     // Kullanıcı odasına katıl
-    socket.emit("join_user", { userId: user.userId }); // Socket event listener'ları
+    socket.emit("join_user", { userId: user.user.id }); // Socket event listener'ları
     const handleMessageNotification = (data: any) => {
       // Aktif sohbet edilen kullanıcıdan gelen mesaj değilse bildirim göster
       if (!selectedUser || selectedUser.id !== data.data.senderId) {
@@ -94,7 +92,7 @@ export default function MainDashboard({ user }: MainDashboardProps) {
         handleFriendAcceptedNotification
       );
     };
-  }, [user.userId, selectedUser, addNotification, requestPermission]);
+  }, [user.user.id, selectedUser, addNotification, requestPermission]);
   const handleSelectUser = (friend: User) => {
     setSelectedUser(friend);
     // Arkadaş seçildiğinde listeyi yenile (okunmamış mesaj sayılarını güncellemek için)
@@ -164,11 +162,11 @@ export default function MainDashboard({ user }: MainDashboardProps) {
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
               Bildirimler
             </div>
-          </div>
-
+          </div>{" "}
           {/* Ayarlar */}
           <div className="relative group">
             <button
+              onClick={() => router.push("/settings")}
               className="w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-all duration-200"
               title="Ayarlar"
             >
@@ -179,18 +177,17 @@ export default function MainDashboard({ user }: MainDashboardProps) {
               Ayarlar
             </div>
           </div>
-
           {/* Profil Avatar */}
           <div className="relative group">
             <button
               className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-white font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200"
-              title={user.username}
+              title={user.user.name || "Profil"}
             >
-              {user.username.charAt(0).toUpperCase()}
+              {user.user.name.charAt(0).toUpperCase()}
             </button>
             {/* Tooltip */}
             <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-              {user.username}
+              {user.user.name}
             </div>
           </div>
         </div>

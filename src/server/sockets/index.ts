@@ -2,11 +2,11 @@ import prisma from "@/lib/prisma";
 import { Server, Socket } from "socket.io";
 
 // Kullanıcı socket ID'lerini tutmak için
-const userSockets = new Map<number, string>();
+const userSockets = new Map<string, string>();
 
 // Kullanıcının çevrimiçi durumunu arkadaşlarına bildir
 const broadcastUserStatus = async (
-  userId: number,
+  userId: string,
   isOnline: boolean,
   io: Server
 ) => {
@@ -84,6 +84,7 @@ const socketHandler = (socket: Socket, io: Server): void => {
             select: {
               id: true,
               username: true,
+              name: true,
               email: true,
             },
           },
@@ -91,6 +92,7 @@ const socketHandler = (socket: Socket, io: Server): void => {
             select: {
               id: true,
               username: true,
+              name: true,
               email: true,
             },
           },
@@ -110,6 +112,7 @@ const socketHandler = (socket: Socket, io: Server): void => {
             data.text.length > 50 ? "..." : ""
           }`,
           username: data.sender.username,
+          name: data.sender.name,
           data: {
             senderId: data.sender.id,
             messageId: message.id,
@@ -130,6 +133,7 @@ const socketHandler = (socket: Socket, io: Server): void => {
       title: "Yeni Arkadaş İsteği",
       message: `${data.senderUsername} size arkadaş isteği gönderdi`,
       username: data.senderUsername,
+      name: data.senderName,
       data: {
         requestId: data.requestId,
         senderId: data.senderId,
@@ -145,6 +149,7 @@ const socketHandler = (socket: Socket, io: Server): void => {
       title: "Arkadaş İsteği Kabul Edildi",
       message: `${data.accepterUsername} arkadaş isteğinizi kabul etti`,
       username: data.accepterUsername,
+      name: data.accepterName,
       data: {
         userId: data.accepterId,
       },
@@ -155,6 +160,7 @@ const socketHandler = (socket: Socket, io: Server): void => {
     socket.to(`user_${data.receiverId}`).emit("userTyping", {
       userId: data.senderId,
       username: data.senderUsername,
+      name: data.senderName,
       isTyping: data.isTyping,
     });
   }); // Mesaj okundu bildirimi
@@ -183,7 +189,7 @@ const socketHandler = (socket: Socket, io: Server): void => {
     console.log("A user disconnected:", socket.id);
 
     // Hangi kullanıcının bağlantısının kesildiğini bul
-    let disconnectedUserId: number | null = null;
+    let disconnectedUserId: string | null = null;
     for (const [userId, socketId] of userSockets.entries()) {
       if (socketId === socket.id) {
         disconnectedUserId = userId;

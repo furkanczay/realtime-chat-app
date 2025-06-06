@@ -1,4 +1,4 @@
-import { getSession } from "@/actions";
+import { getSession } from "@/lib/session";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -17,7 +17,6 @@ export async function PATCH(
       { status: 403 }
     );
   }
-
   try {
     const requestId = parseInt(params.id);
     const { action } = await request.json();
@@ -52,7 +51,7 @@ export async function PATCH(
     }
 
     // Sadece alıcı yanıtlayabilir
-    if (friendRequest.receiverId !== session.userId) {
+    if (friendRequest.receiverId !== session.user.id) {
       return NextResponse.json(
         {
           success: false,
@@ -80,12 +79,17 @@ export async function PATCH(
         prisma.friendRequest.update({
           where: { id: requestId },
           data: { status: "ACCEPTED" },
-        }),
-        // Arkadaşlık oluştur
+        }), // Arkadaşlık oluştur
         prisma.friendship.create({
           data: {
-            user1Id: Math.min(friendRequest.senderId, friendRequest.receiverId),
-            user2Id: Math.max(friendRequest.senderId, friendRequest.receiverId),
+            user1Id:
+              friendRequest.senderId < friendRequest.receiverId
+                ? friendRequest.senderId
+                : friendRequest.receiverId,
+            user2Id:
+              friendRequest.senderId < friendRequest.receiverId
+                ? friendRequest.receiverId
+                : friendRequest.senderId,
           },
         }),
       ]);

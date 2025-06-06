@@ -1,10 +1,10 @@
-import { getSession } from "@/actions";
+import { getSession } from "@/lib/session";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   const session = await getSession();
 
@@ -19,17 +19,8 @@ export async function GET(
   }
 
   try {
-    const otherUserId = parseInt(params.userId);
-
-    if (isNaN(otherUserId)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Geçersiz kullanıcı ID'si",
-        },
-        { status: 400 }
-      );
-    }
+    const { userId } = await params;
+    const otherUserId = userId;
 
     // Kullanıcının var olup olmadığını kontrol et
     const otherUser = await prisma.user.findUnique({
@@ -50,8 +41,8 @@ export async function GET(
     const friendship = await prisma.friendship.findFirst({
       where: {
         OR: [
-          { user1Id: session.userId, user2Id: otherUserId },
-          { user1Id: otherUserId, user2Id: session.userId },
+          { user1Id: session.user.id, user2Id: otherUserId },
+          { user1Id: otherUserId, user2Id: session.user.id },
         ],
       },
     });
@@ -70,8 +61,8 @@ export async function GET(
     const messages = await prisma.message.findMany({
       where: {
         OR: [
-          { senderId: session.userId, receiverId: otherUserId },
-          { senderId: otherUserId, receiverId: session.userId },
+          { senderId: session.user.id, receiverId: otherUserId },
+          { senderId: otherUserId, receiverId: session.user.id },
         ],
       },
       orderBy: { createdAt: "asc" },
@@ -80,6 +71,7 @@ export async function GET(
           select: {
             id: true,
             username: true,
+            name: true,
             email: true,
             avatar: true,
           },
@@ -88,6 +80,7 @@ export async function GET(
           select: {
             id: true,
             username: true,
+            name: true,
             email: true,
             avatar: true,
           },
@@ -99,7 +92,7 @@ export async function GET(
     await prisma.message.updateMany({
       where: {
         senderId: otherUserId,
-        receiverId: session.userId,
+        receiverId: session.user.id,
         isRead: false,
       },
       data: {

@@ -19,6 +19,7 @@ import {
   CheckCheck,
 } from "lucide-react";
 import React, { FormEvent, useEffect, useState, useRef, useMemo } from "react";
+import { Badge } from "./ui/badge";
 
 // Yardımcı fonksiyon: Son görülme zamanını formatla
 const formatLastSeen = (lastSeen: string) => {
@@ -57,20 +58,20 @@ interface Message {
   createdAt: string;
   isRead?: boolean;
   sender: {
-    id: number;
-    username: string;
+    id: string;
+    name: string;
     email: string;
   };
   receiver: {
-    id: number;
-    username: string;
+    id: string;
+    name: string;
     email: string;
   };
 }
 
 interface User {
-  id: number;
-  username: string;
+  id: string;
+  name: string;
   email: string;
   avatar?: string;
   isOnline?: boolean;
@@ -136,21 +137,21 @@ export default function PrivateChat({
         }
       };
       const handleTyping = (data: {
-        userId: number;
-        username: string;
+        userId: string;
+        name: string;
         isTyping: boolean;
       }) => {
         // Gelen yazıyor bilgisi seçili kullanıcıdan geliyorsa göster
         if (data.userId === selectedUser.id) {
           setIsTyping(data.isTyping);
           if (data.isTyping) {
-            setTypingUser(data.username);
+            setTypingUser(data.name);
           } else {
             setTypingUser("");
           }
         }
       };
-      const handleMessagesRead = (data: { receiverId: number }) => {
+      const handleMessagesRead = (data: { receiverId: string }) => {
         console.log("Mesajların okunduğu bildirimi geldi:", data);
         // Bu kullanıcıya gönderilen mesajları okundu olarak işaretle
         setMessages((prev) =>
@@ -168,7 +169,7 @@ export default function PrivateChat({
       };
 
       const handleUserStatusChange = (data: {
-        userId: number;
+        userId: string;
         isOnline: boolean;
         lastSeen: Date;
       }) => {
@@ -281,7 +282,8 @@ export default function PrivateChat({
     socket.emit("typing", {
       receiverId: selectedUser.id,
       senderId: currentUser.id,
-      senderUsername: currentUser.username,
+      senderUsername: currentUser.name,
+      senderName: currentUser.name,
       isTyping: true,
     });
 
@@ -295,12 +297,12 @@ export default function PrivateChat({
       handleTypingStop();
     }, 3000);
   };
-
   const handleTypingStop = () => {
     socket.emit("typing", {
       receiverId: selectedUser.id,
       senderId: currentUser.id,
-      senderUsername: currentUser.username,
+      senderUsername: currentUser.name,
+      senderName: currentUser.name,
       isTyping: false,
     });
 
@@ -333,25 +335,24 @@ export default function PrivateChat({
     );
   }
   return (
-    <div className="flex-1 flex flex-col bg-white">
+    <div className="flex-1 max-h-screen overflow-y-auto flex flex-col bg-white">
       {" "}
       {/* Chat Header */}
       <div className="bg-white border-b border-gray-200 p-4">
         <div className="flex items-center gap-3">
           <div className="relative">
             <Avatar className="h-10 w-10">
+              {" "}
               <AvatarFallback className="bg-gradient-to-br from-green-400 to-blue-500 text-white font-semibold">
-                {selectedUser.username.charAt(0).toUpperCase()}
+                {selectedUser.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             {selectedUser.isOnline && (
               <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
             )}
-          </div>
+          </div>{" "}
           <div className="flex-1">
-            <h2 className="font-semibold text-gray-900">
-              {selectedUser.username}
-            </h2>
+            <h2 className="font-semibold text-gray-900">{selectedUser.name}</h2>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               {selectedUser.isOnline ? (
                 <>
@@ -391,9 +392,9 @@ export default function PrivateChat({
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Güvenli mesajlaşmaya başla
-              </h3>
+              </h3>{" "}
               <p className="text-gray-500 text-sm">
-                {selectedUser.username} ile olan mesajların uçtan uca şifrelenir
+                {selectedUser.name} ile olan mesajların uçtan uca şifrelenir
               </p>
             </div>{" "}
           </div>
@@ -446,7 +447,7 @@ export default function PrivateChat({
               return (
                 <div key={message.id}>
                   <div
-                    className={`flex items-end gap-2 ${
+                    className={`flex items-start gap-2 ${
                       isOwnMessage ? "justify-end" : "justify-start"
                     } ${isGroupedWithPrev ? "mt-0.5" : "mt-4"}`}
                   >
@@ -457,9 +458,10 @@ export default function PrivateChat({
                           !shouldGroupWithNext ? "mb-1" : "invisible"
                         }`}
                       >
+                        {" "}
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-500 text-white text-xs font-semibold">
-                            {message.sender.username.charAt(0).toUpperCase()}
+                            {message.sender.name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                       </div>
@@ -473,8 +475,13 @@ export default function PrivateChat({
                       {/* Kullanıcı adı sadece gelen mesajlarda ve ilk mesajda */}
                       {!isOwnMessage && !isGroupedWithPrev && (
                         <div className="mb-1 ml-3">
-                          <span className="text-xs font-medium text-gray-500">
-                            {message.sender.username}
+                          <span className="text-xs flex flex-col gap-1 font-medium text-gray-500">
+                            {message.sender.name}{" "}
+                            <Badge variant={"outline"} className="text-xs">
+                              <span className="text-gray-400">
+                                {message.sender.email}
+                              </span>
+                            </Badge>
                           </span>
                         </div>
                       )}
@@ -565,10 +572,11 @@ export default function PrivateChat({
       <div className="bg-white border-t border-gray-200 p-4">
         <form onSubmit={sendMessage} className="flex items-end gap-3">
           <div className="flex-1 relative">
+            {" "}
             <Input
               type="text"
               name="message"
-              placeholder={`${selectedUser.username}'e mesaj yaz...`}
+              placeholder={`${selectedUser.name}'e mesaj yaz...`}
               className="w-full pr-4 py-3 px-4 rounded-full border-gray-200 focus:border-green-500 focus:ring-green-500 transition-all duration-200 resize-none"
               autoComplete="off"
               onInput={handleTypingStart}

@@ -1,21 +1,22 @@
+
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgres"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  username String @unique
-  email    String @unique
-  password String
-  avatar   String?
-  isOnline Boolean @default(false)
-  lastSeen DateTime @default(now())
+  id        String      @id 
+  username  String   @unique
+  displayUsername String   @unique
+  email     String   @unique
+  avatar    String?
+  isOnline  Boolean  @default(false)
+  lastSeen  DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -34,6 +35,12 @@ model User {
   // Arkadaşlık ilişkileri (alınan)
   friendships2 Friendship[] @relation("User2Friendships")
 
+  name          String
+  emailVerified Boolean
+  image         String?
+  sessions      Session[]
+  accounts      Account[]
+
   @@map("users")
 }
 
@@ -45,27 +52,27 @@ model Message {
 
   // Mesajı gönderen
   sender   User @relation("SentMessages", fields: [senderId], references: [id])
-  senderId Int
+  senderId String
 
   // Mesajı alan
   receiver   User @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  receiverId Int
+  receiverId String
 
   @@map("messages")
 }
 
 model FriendRequest {
-  id        Int      @id @default(autoincrement())
+  id        Int                 @id @default(autoincrement())
   status    FriendRequestStatus @default(PENDING)
-  createdAt DateTime @default(now())
+  createdAt DateTime            @default(now())
 
   // İsteği gönderen
   sender   User @relation("SentFriendRequests", fields: [senderId], references: [id])
-  senderId Int
+  senderId String
 
   // İsteği alan
   receiver   User @relation("ReceivedFriendRequests", fields: [receiverId], references: [id])
-  receiverId Int
+  receiverId String
 
   @@unique([senderId, receiverId])
   @@map("friend_requests")
@@ -77,11 +84,11 @@ model Friendship {
 
   // İlk kullanıcı
   user1   User @relation("User1Friendships", fields: [user1Id], references: [id])
-  user1Id Int
+  user1Id String
 
   // İkinci kullanıcı
   user2   User @relation("User2Friendships", fields: [user2Id], references: [id])
-  user2Id Int
+  user2Id String
 
   @@unique([user1Id, user2Id])
   @@map("friendships")
@@ -91,4 +98,49 @@ enum FriendRequestStatus {
   PENDING
   ACCEPTED
   REJECTED
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
 }

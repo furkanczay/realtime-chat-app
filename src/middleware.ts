@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getSession } from "./actions";
+import { getSessionCookie } from "better-auth/cookies";
 
 export async function middleware(request: NextRequest) {
-  const session = await getSession();
+  const sessionCookie = getSessionCookie(request);
 
   if (
-    !session.isLoggedIn &&
+    !sessionCookie &&
     request.nextUrl.pathname !== "/login" &&
     request.nextUrl.pathname !== "/register"
   ) {

@@ -1,4 +1,4 @@
-import { getSession } from "@/actions";
+import { getSession } from "@/lib/session";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const users = await prisma.user.findMany({
       where: {
         AND: [
-          { id: { not: session.userId } },
+          { id: { not: session.user.id } },
           {
             OR: [
               { username: { contains: query } },
@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         username: true,
+        name: true,
         email: true,
         avatar: true,
       },
@@ -58,11 +59,11 @@ export async function GET(request: NextRequest) {
         where: {
           OR: [
             {
-              user1Id: session.userId,
+              user1Id: session.user.id,
               user2Id: { in: users.map((u) => u.id) },
             },
             {
-              user2Id: session.userId,
+              user2Id: session.user.id,
               user1Id: { in: users.map((u) => u.id) },
             },
           ],
@@ -77,11 +78,11 @@ export async function GET(request: NextRequest) {
         where: {
           OR: [
             {
-              senderId: session.userId,
+              senderId: session.user.id,
               receiverId: { in: users.map((u) => u.id) },
             },
             {
-              receiverId: session.userId,
+              receiverId: session.user.id,
               senderId: { in: users.map((u) => u.id) },
             },
           ],

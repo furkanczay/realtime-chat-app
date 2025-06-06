@@ -1,4 +1,4 @@
-import { getSession } from "@/actions";
+import { getSession } from "@/lib/session";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -20,7 +20,7 @@ export async function GET() {
     // Kullanıcıya gelen bekleyen istekleri getir
     const friendRequests = await prisma.friendRequest.findMany({
       where: {
-        receiverId: session.userId,
+        receiverId: session.user.id,
         status: "PENDING",
       },
       include: {
@@ -28,6 +28,7 @@ export async function GET() {
           select: {
             id: true,
             username: true,
+            name: true,
             email: true,
             avatar: true,
           },
@@ -36,6 +37,7 @@ export async function GET() {
           select: {
             id: true,
             username: true,
+            name: true,
             email: true,
             avatar: true,
           },
@@ -79,7 +81,7 @@ export async function POST(request: NextRequest) {
   try {
     const { receiverId } = await request.json();
 
-    if (!receiverId || receiverId === session.userId) {
+    if (!receiverId || receiverId === session.user.id) {
       return NextResponse.json(
         {
           success: false,
@@ -106,8 +108,8 @@ export async function POST(request: NextRequest) {
     const existingFriendship = await prisma.friendship.findFirst({
       where: {
         OR: [
-          { user1Id: session.userId, user2Id: receiverId },
-          { user1Id: receiverId, user2Id: session.userId },
+          { user1Id: session.user.id, user2Id: receiverId },
+          { user1Id: receiverId, user2Id: session.user.id },
         ],
       },
     });
@@ -126,8 +128,8 @@ export async function POST(request: NextRequest) {
     const existingRequest = await prisma.friendRequest.findFirst({
       where: {
         OR: [
-          { senderId: session.userId, receiverId: receiverId },
-          { senderId: receiverId, receiverId: session.userId },
+          { senderId: session.user.id, receiverId: receiverId },
+          { senderId: receiverId, receiverId: session.user.id },
         ],
         status: "PENDING",
       },
@@ -146,7 +148,7 @@ export async function POST(request: NextRequest) {
     // Arkadaşlık isteği oluştur
     const friendRequest = await prisma.friendRequest.create({
       data: {
-        senderId: session.userId,
+        senderId: session.user.id,
         receiverId: receiverId,
       },
       include: {
@@ -154,6 +156,7 @@ export async function POST(request: NextRequest) {
           select: {
             id: true,
             username: true,
+            name: true,
             email: true,
             avatar: true,
           },
@@ -162,6 +165,7 @@ export async function POST(request: NextRequest) {
           select: {
             id: true,
             username: true,
+            name: true,
             email: true,
             avatar: true,
           },
