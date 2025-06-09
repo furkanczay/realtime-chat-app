@@ -1,16 +1,17 @@
 import { getSession } from "@/lib/session";
 import MainDashboard from "@/components/main-dashboard";
-import { redirect } from "next/navigation";
+import LandingPage from "@/components/landing-page";
 
 export default async function Home() {
   const session = await getSession();
-  if (!session) {
-    return redirect("/login");
+  
+  if (session) {
+    return (
+      <div>
+        <MainDashboard user={session} />
+      </div>
+    );
   }
 
-  return (
-    <div>
-      <MainDashboard user={session} />
-    </div>
-  );
+  return <LandingPage />;
 }

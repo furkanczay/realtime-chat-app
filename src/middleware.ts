@@ -7,6 +7,7 @@ export async function middleware(request: NextRequest) {
 
   if (
     !sessionCookie &&
+    request.nextUrl.pathname !== "/" &&
     request.nextUrl.pathname !== "/login" &&
     request.nextUrl.pathname !== "/register"
   ) {

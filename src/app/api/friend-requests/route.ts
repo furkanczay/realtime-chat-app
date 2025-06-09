@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Bekleyen istek var mı kontrol et
+    // Bekleyen istek var mı kontrol et (hem gönderilen hem alınan)
     const existingRequest = await prisma.friendRequest.findFirst({
       where: {
         OR: [
@@ -139,7 +139,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Zaten bekleyen bir istek var",
+          message: existingRequest.senderId === session.user.id 
+            ? "Bu kullanıcıya zaten arkadaşlık isteği gönderdiniz" 
+            : "Bu kullanıcı size zaten arkadaşlık isteği göndermiş",
         },
         { status: 400 }
       );
@@ -177,8 +179,20 @@ export async function POST(request: NextRequest) {
       success: true,
       data: friendRequest,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Arkadaşlık isteği gönderilirken hata:", error);
+    
+    // Prisma P2002 unique constraint hatası kontrolü
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Bu kullanıcıya zaten arkadaşlık isteği gönderilmiş",
+        },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       {
         success: false,
