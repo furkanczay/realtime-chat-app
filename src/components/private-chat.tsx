@@ -16,9 +16,116 @@ import {
   ShieldCheck,
   Check,
   CheckCheck,
+  Eye,
+  Type,
 } from "lucide-react";
-import React, { FormEvent, useEffect, useState, useRef, useMemo } from "react";
+import React, { FormEvent, useEffect, useState, useRef, useMemo, Suspense } from "react";
 import { Badge } from "./ui/badge";
+
+// Dynamic imports for ES modules
+const ReactMarkdown = React.lazy(() => import("react-markdown"));
+const remarkGfm = React.lazy(() => import("remark-gfm").then(mod => ({ default: mod.default })));
+
+// Markdown Component with dynamic loading
+const MarkdownRenderer = ({ children }: { children: string }) => {
+  const [ReactMarkdownComponent, setReactMarkdownComponent] = useState<any>(null);
+  const [remarkGfmPlugin, setRemarkGfmPlugin] = useState<any>(null);
+
+  useEffect(() => {
+    const loadComponents = async () => {
+      try {
+        const [ReactMarkdownMod, remarkGfmMod] = await Promise.all([
+          import("react-markdown"),
+          import("remark-gfm")
+        ]);
+        setReactMarkdownComponent(() => ReactMarkdownMod.default);
+        setRemarkGfmPlugin(() => remarkGfmMod.default);
+      } catch (error) {
+        console.error("Failed to load markdown components:", error);
+      }
+    };
+    loadComponents();
+  }, []);
+
+  // Fallback basit markdown parser
+  const parseMarkdownSimple = (text: string) => {
+    let html = text
+      // HTML escape
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      // Kod blokları
+      .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre class="bg-gray-800 text-green-400 p-2 rounded text-xs overflow-x-auto my-1"><div class="text-xs text-gray-400 mb-1">$1</div><code>$2</code></pre>')
+      // Inline kod
+      .replace(/`([^`\n]+)`/g, '<code class="bg-gray-200 px-1 py-0.5 rounded text-xs font-mono text-red-600">$1</code>')
+      // Kalın
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
+      // İtalik
+      .replace(/\*([^*\n]+)\*/g, '<em class="italic">$1</em>')
+      // Üstü çizili
+      .replace(/~~(.*?)~~/g, '<del class="line-through">$1</del>')
+      // Satır sonları
+      .replace(/\n/g, '<br>');
+    
+    return html;
+  };
+
+  if (!ReactMarkdownComponent || !remarkGfmPlugin) {
+    // Fallback: Basit markdown parser kullan
+    return (
+      <div 
+        className="text-sm leading-relaxed break-words"
+        dangerouslySetInnerHTML={{ __html: parseMarkdownSimple(children) }}
+      />
+    );
+  }
+
+  return (
+    <div className="text-sm leading-relaxed break-words prose prose-sm max-w-none">
+      <ReactMarkdownComponent
+        remarkPlugins={[remarkGfmPlugin]}
+        components={{
+          code({ node, inline, className, children, ...props }: any) {
+            const match = /language-(\w+)/.exec(className || "");
+            if (!inline && match) {
+              return (
+                <pre className="bg-gray-800 text-green-400 p-2 rounded text-xs overflow-x-auto my-1">
+                  <div className="text-xs text-gray-400 mb-1">{match[1]}</div>
+                  <code>{String(children).replace(/\n$/, "")}</code>
+                </pre>
+              );
+            }
+            return (
+              <code 
+                className="bg-gray-200 px-1 py-0.5 rounded text-xs font-mono text-red-600" 
+                {...props}
+              >
+                {children}
+              </code>
+            );
+          },
+          p({ children }: any) {
+            return <p className="my-0.5">{children}</p>;
+          },
+          strong({ children }: any) {
+            return <strong className="font-bold">{children}</strong>;
+          },
+          em({ children }: any) {
+            return <em className="italic">{children}</em>;
+          },
+          del({ children }: any) {
+            return <del className="line-through">{children}</del>;
+          },
+          pre({ children }: any) {
+            return <pre className="my-1">{children}</pre>;
+          }
+        }}
+      >
+        {children}
+      </ReactMarkdownComponent>
+    </div>
+  );
+};
 
 // Yardımcı fonksiyon: Son görülme zamanını formatla
 const formatLastSeen = (lastSeen: string) => {
@@ -91,8 +198,11 @@ export default function PrivateChat({
   const [isTyping, setIsTyping] = useState(false);
   const [typingUser, setTypingUser] = useState<string>("");
   const [selectedUser, setSelectedUser] = useState<User>(initialSelectedUser);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Şifreleme anahtarını oluştur - useMemo ile optimize et
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null); // Şifreleme anahtarını oluştur - useMemo ile optimize et
   const roomKey = useMemo(
     () => generateRoomKey(currentUser.id, selectedUser.id),
     [currentUser.id, selectedUser.id]
@@ -255,10 +365,6 @@ export default function PrivateChat({
   };
   const sendMessage = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const messageText = formData.get("message") as string;
-
     if (!messageText.trim()) return;
 
     // Yazıyor durumunu sıfırla
@@ -275,8 +381,40 @@ export default function PrivateChat({
     };
 
     socket.emit("privateMessage", messageData);
-    form.reset();
+    setMessageText("");
+    setIsPreviewMode(false);
   };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      if (e.shiftKey) {
+        // Shift+Enter: Yeni satır ekle
+        return; // Varsayılan davranışa izin ver
+      } else {
+        // Sadece Enter: Mesaj gönder
+        e.preventDefault();
+        if (messageText.trim()) {
+          const formEvent = {
+            preventDefault: () => {},
+            currentTarget: e.currentTarget.form
+          } as FormEvent<HTMLFormElement>;
+          sendMessage(formEvent);
+        }
+      }
+    }
+  };
+
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = Math.min(textarea.scrollHeight, 120) + "px";
+    }
+  };
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [messageText]);
   const handleTypingStart = () => {
     socket.emit("typing", {
       receiverId: selectedUser.id,
@@ -494,9 +632,9 @@ export default function PrivateChat({
                         >
                           <div className="flex items-end gap-1">
                             {/* Mesaj içeriği */}
-                            <p className="text-sm leading-relaxed break-words">
-                              {message.text}
-                            </p>
+                            <Suspense fallback={<div>...</div>}>
+                              <MarkdownRenderer>{message.text}</MarkdownRenderer>
+                            </Suspense>
 
                             {/* Zaman ve durum bilgisi */}
                             <div
@@ -568,26 +706,62 @@ export default function PrivateChat({
       </div>{" "}
       {/* Message Input */}
       <div className="bg-white border-t border-gray-200 p-4">
-        <form onSubmit={sendMessage} className="flex items-end gap-3">
-          <div className="flex-1 relative">
-            {" "}
-            <Input
-              type="text"
-              name="message"
-              placeholder={`${selectedUser.name}'e mesaj yaz...`}
-              className="w-full pr-4 py-3 px-4 rounded-full border-gray-200 focus:border-green-500 focus:ring-green-500 transition-all duration-200 resize-none"
-              autoComplete="off"
-              onInput={handleTypingStart}
-              onBlur={handleTypingStop}
-            />
+        <form onSubmit={sendMessage} className="space-y-3">
+          <div className="border rounded-lg p-3 bg-white">
+            <div className="flex items-center gap-2 mb-2">
+              <button
+                type="button"
+                onClick={() => setIsPreviewMode(!isPreviewMode)}
+                className={`p-1 rounded transition-colors ${
+                  isPreviewMode ? "bg-blue-100 text-blue-600" : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                {isPreviewMode ? <Type size={14} /> : <Eye size={14} />}
+              </button>
+              <span className="text-xs text-gray-500">
+                {isPreviewMode ? "Düzenleme" : "Önizleme"}
+              </span>
+              <div className="flex-1" />
+              <span className="text-xs text-gray-400">Markdown destekli</span>
+            </div>
+            
+            {isPreviewMode ? (
+              <div className="min-h-[40px] p-2 border rounded bg-gray-50">
+                {messageText ? (
+                  <Suspense fallback={<div>Loading preview...</div>}>
+                    <MarkdownRenderer>{messageText}</MarkdownRenderer>
+                  </Suspense>
+                ) : (
+                  <span className="text-gray-400 text-sm">Önizleme için mesaj yazın...</span>
+                )}
+              </div>
+            ) : (
+              <textarea
+                ref={textareaRef}
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={`${selectedUser.name}'e mesaj yaz... (Markdown desteklenir)`}
+                className="w-full resize-none border-0 outline-none min-h-[40px] max-h-[120px] text-sm"
+                rows={1}
+                onInput={handleTypingStart}
+                onBlur={handleTypingStop}
+              />
+            )}
           </div>
-          <Button
-            type="submit"
-            size="icon"
-            className="h-12 w-12 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-          >
-            <Send className="h-5 w-5" />
-          </Button>
+
+          <div className="flex justify-between items-center">
+            <div className="text-xs text-gray-500">
+            </div>
+            <Button
+              type="submit"
+              disabled={!messageText.trim()}
+              className="h-8 px-4 bg-green-500 hover:bg-green-600 text-white shadow transition-all duration-200"
+            >
+              <Send className="h-4 w-4 mr-1" />
+              Gönder
+            </Button>
+          </div>
         </form>
 
         {/* Encryption Notice */}

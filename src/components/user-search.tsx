@@ -20,12 +20,13 @@ interface User {
   username: string;
   email: string;
   avatar?: string;
+  name?: string;
 }
 
 interface FriendRequest {
   id: string;
-  sender: User;
-  receiver: User;
+  sender: User & { name: string };
+  receiver: User & { name: string };
   status: "PENDING" | "ACCEPTED" | "REJECTED";
   createdAt: string;
 }
@@ -36,6 +37,8 @@ export default function UserSearch() {
   const [loading, setLoading] = useState(false);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [open, setOpen] = useState(false);
+  const [sendingRequest, setSendingRequest] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const searchUsers = async () => {
     if (!searchTerm.trim()) return;
@@ -56,6 +59,8 @@ export default function UserSearch() {
     }
   };
   const sendFriendRequest = async (userId: string) => {
+    setSendingRequest(userId);
+    setError(null);
     try {
       const response = await fetch("/api/friend-requests", {
         method: "POST",
@@ -65,25 +70,32 @@ export default function UserSearch() {
         body: JSON.stringify({ receiverId: userId }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      const data = await response.json();
 
+      if (response.ok && data.success) {
         // Socket event emit et - arkadaş isteği gönderildi bildirimi
-        if (data.success && data.data) {
+        if (data.data) {
           socket.emit("friendRequestSent", {
             requestId: data.data.id,
             senderId: data.data.senderId,
             senderUsername: data.data.sender.username,
+            senderName: data.data.sender.name,
             receiverId: userId,
           });
-        } // Arama sonuçlarından kullanıcıyı kaldır ve dialog'u kapat
+        } 
+        
+        // Arama sonuçlarından kullanıcıyı kaldır ve dialog'u kapat
         setSearchResults((prev) => prev.filter((user) => user.id !== userId));
         setOpen(false);
         setSearchTerm("");
         setSearchResults([]);
+      } else {
+        setError(data.message || "Arkadaşlık isteği gönderilemedi");
       }
     } catch (error) {
-      console.error("Arkadaşlık isteği gönderme hatası:", error);
+      setError("Bağlantı hatası. Lütfen tekrar deneyin.");
+    } finally {
+      setSendingRequest(null);
     }
   };
   const handleFriendRequest = async (
@@ -110,6 +122,7 @@ export default function UserSearch() {
               senderId: request.sender.id,
               accepterId: request.receiver.id,
               accepterUsername: request.receiver.username,
+              accepterName: request.receiver.name,
             });
           }
         }
@@ -136,7 +149,12 @@ export default function UserSearch() {
     loadFriendRequests();
   }, []);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      setOpen(isOpen);
+      if (isOpen) {
+        setError(null);
+      }
+    }}>
       <DialogTrigger asChild>
         <Button className="bg-green-500 hover:bg-green-600 text-white">
           <Plus className="h-4 w-4 mr-2" />
@@ -172,7 +190,14 @@ export default function UserSearch() {
             >
               {loading ? "Arıyor..." : "Ara"}
             </Button>
-          </div>{" "}
+          </div>
+          
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
           <div className="flex-1 overflow-y-auto max-h-80">
             {/* Arkadaşlık İstekleri */}
             {friendRequests.length > 0 && (
@@ -255,10 +280,15 @@ export default function UserSearch() {
                       <Button
                         size="sm"
                         onClick={() => sendFriendRequest(user.id)}
-                        className="bg-green-500 hover:bg-green-600 text-white h-8 px-3"
+                        disabled={sendingRequest === user.id}
+                        className="bg-green-500 hover:bg-green-600 text-white h-8 px-3 disabled:opacity-50"
                       >
-                        <UserPlus className="h-3 w-3 mr-1" />
-                        Ekle
+                        {sendingRequest === user.id ? (
+                          <div className="h-3 w-3 border border-white/30 border-t-white rounded-full animate-spin mr-1" />
+                        ) : (
+                          <UserPlus className="h-3 w-3 mr-1" />
+                        )}
+                        {sendingRequest === user.id ? "Gönderiliyor..." : "Ekle"}
                       </Button>
                     </div>
                   ))}
